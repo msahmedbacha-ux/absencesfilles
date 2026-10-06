@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f4a3a">
+<title>Absences – Grande Mosquée de Laval</title>
+<link rel="icon" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<style>
+  :root { --vert:#1f4a3a; --or:#b8923a; --creme:#faf7f0; --rouge:#b3261e; --orange:#c76f0a; --gris:#6b6b6b; --bord:#e4dccb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--creme); color:#222; }
+  [hidden] { display:none !important; }
+  header { background:#fff; border-bottom:3px solid var(--or); padding:12px 16px; display:flex; align-items:center; gap:14px; }
+  header img { height:68px; width:68px; object-fit:contain; }
+  header h1 { font-size:18px; margin:0; color:var(--vert); line-height:1.2; }
+  header p { margin:3px 0 0; font-size:13px; color:var(--gris); }
+  main { max-width:720px; margin:0 auto; padding:16px 16px 120px; }
+  .card { background:#fff; border:1px solid var(--bord); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:16px; margin:0 0 4px; color:var(--vert); }
+  .champ { display:block; font-size:13px; font-weight:600; margin:12px 0 4px; color:var(--vert); }
+  input[type=date], input[type=password], select {
+    width:100%; padding:11px; font-size:16px; border:1px solid #cfc6b0; border-radius:8px; background:#fff; }
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  button { font-size:16px; font-weight:600; border:0; border-radius:10px; padding:13px 18px; cursor:pointer; }
+  button:disabled { opacity:.55; cursor:default; }
+  .primaire { background:var(--vert); color:#fff; }
+  .secondaire { background:#fff; color:var(--vert); border:1px solid var(--vert); }
+  .actions { display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  .actions button { flex:1; }
+  .info { background:#fff8e1; border:1px solid #ecd9a0; border-radius:8px; padding:10px 12px; font-size:14px; margin-bottom:12px; }
+  .qui { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:14px; margin-bottom:4px; }
+  .liens { display:flex; gap:14px; flex-wrap:wrap; }
+  .lien { background:none; border:0; padding:6px 0; color:var(--vert); font-size:14px; font-weight:600; text-decoration:underline; }
+
+  .eleve { border-bottom:1px solid var(--bord); padding:12px 0; }
+  .eleve:last-child { border-bottom:0; }
+  .eleve.absent { background:#fdf1f0; margin:0 -16px; padding:12px 16px; }
+  .eleve.retard { background:#fff6e8; margin:0 -16px; padding:12px 16px; }
+  .nom { font-size:16px; font-weight:600; }
+  .compteurs { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .badge { font-size:12px; font-weight:600; border-radius:20px; padding:3px 10px; background:#f1eee6; color:#555; }
+  .badge.prev { background:#eef3f0; color:var(--vert); }
+  .badge.retard { background:#fff1dc; color:#8a5200; }
+  .badge.alerte { background:var(--rouge); color:#fff; }
+  .seg { display:flex; gap:6px; margin-top:10px; }
+  .segbtn { flex:1; min-height:44px; padding:8px 4px; font-size:15px; font-weight:600; color:#444;
+            background:#fff; border:1px solid #cfc6b0; border-radius:8px; }
+  .segbtn.on.present { background:#e8f3ec; border-color:var(--vert); color:var(--vert); }
+  .segbtn.on.absent  { background:var(--rouge); border-color:var(--rouge); color:#fff; }
+  .segbtn.on.retard  { background:var(--orange); border-color:var(--orange); color:#fff; }
+  .eleve select { margin-top:8px; }
+  .eleve select.manque { border-color:var(--rouge); box-shadow:0 0 0 2px #f3c4c0; }
+  .minutes { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:10px; font-size:15px; }
+  .minutes input { width:84px; padding:10px; font-size:16px; border:1px solid #cfc6b0; border-radius:8px; }
+  .minutes input.manque { border-color:var(--rouge); box-shadow:0 0 0 2px #f3c4c0; }
+  .chip { padding:9px 13px; font-size:14px; background:#fff; color:var(--orange); border:1px solid var(--orange); border-radius:20px; }
+
+  .barre { position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:3px solid var(--or);
+           padding:10px 16px; display:flex; align-items:center; gap:12px; justify-content:space-between; }
+  .barre strong { color:var(--vert); font-size:14px; }
+  .barre button { flex:none; }
+
+  table { width:100%; border-collapse:collapse; font-size:14px; margin-top:10px; }
+  th, td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--bord); }
+  th { color:var(--vert); font-size:12px; text-transform:uppercase; }
+  .ok { color:var(--vert); font-weight:700; }
+</style>
+</head>
+<body>
+
+<header>
+  <img id="logo" src="logo.png" alt="Grande Mosquée de Laval" onerror="this.hidden=true">
+  <div>
+    <h1>Grande Mosquée de Laval</h1>
+    <p>Absences et retards – cours d’arabe et de Coran (Filles)</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- 0. Connexion -->
+  <section class="card" id="carteLogin">
+    <h2>Connexion enseignant</h2>
+    <label class="champ" for="loginNom">Votre nom</label>
+    <select id="loginNom"></select>
+    <label class="champ" for="loginCode">Votre code</label>
+    <input type="password" id="loginCode" autocomplete="off" placeholder="Code personnel (ou code provisoire)">
+    <div class="actions">
+      <button class="primaire" id="btnConnexion">Se connecter</button>
+    </div>
+  </section>
+
+  <!-- 0 bis. Choix du code personnel -->
+  <section class="card" id="carteCode" hidden>
+    <h2 id="titreCode"></h2>
+    <p id="texteCode" style="margin:4px 0 0;font-size:14px;color:var(--gris)"></p>
+    <label class="champ" for="nouveauCode">Nouveau code</label>
+    <input type="password" id="nouveauCode" autocomplete="new-password">
+    <label class="champ" for="nouveauCode2">Confirmez le nouveau code</label>
+    <input type="password" id="nouveauCode2" autocomplete="new-password">
+    <div class="actions">
+      <button class="primaire" id="btnEnregistrerCode">Enregistrer mon code</button>
+      <button class="secondaire" id="btnAnnulerCode">Annuler</button>
+    </div>
+  </section>
+
+  <!-- 1. Séance -->
+  <section class="card" id="carteSeance" hidden>
+    <div class="qui">
+      <span>Connecté : <strong id="qui"></strong></span>
+      <span class="liens">
+        <button type="button" class="lien" id="btnChangerCode">Changer mon code</button>
+        <button type="button" class="lien" id="btnDeconnexion">Changer d’enseignant</button>
+      </span>
+    </div>
+    <h2>Séance</h2>
+    <div class="duo">
+      <div>
+        <label class="champ" for="date">Date</label>
+        <input type="date" id="date">
+      </div>
+      <div>
+        <label class="champ" for="heure">Heure</label>
+        <select id="heure"></select>
+      </div>
+    </div>
+    <div class="duo">
+      <div>
+        <label class="champ" for="classe">Classe</label>
+        <select id="classe"></select>
+      </div>
+      <div>
+        <label class="champ" for="cours">Cours</label>
+        <select id="cours"></select>
+      </div>
+    </div>
+    <p id="chargement" class="info" style="margin:14px 0 0" hidden>Chargement de la liste des élèves…</p>
+    <div class="actions">
+      <button class="secondaire" id="btnSignales">Voir tous les élèves signalés</button>
+    </div>
+  </section>
+
+  <!-- 2. Appel -->
+  <section class="card" id="carteAppel" hidden>
+    <h2 id="titreAppel"></h2>
+    <p style="margin:2px 0 10px;font-size:14px;color:var(--gris)">Touchez <strong>Absent</strong> (puis choisissez le motif) ou <strong>En retard</strong> (puis indiquez les minutes de retard).</p>
+    <div class="info" id="infoExistante" hidden>Cet appel a déjà été enregistré. Vous pouvez le modifier puis le valider à nouveau.</div>
+    <div class="info" id="bandeauSignales" hidden style="background:#fdf1f0;border-color:#f3c4c0"></div>
+    <div id="liste"></div>
+  </section>
+
+  <!-- 3. Résultat -->
+  <section class="card" id="carteResultat" hidden>
+    <h2 class="ok">✔ Appel validé</h2>
+    <p id="msgResultat"></p>
+    <div id="blocSignalesJour" hidden>
+      <div class="info" style="background:#fdf1f0;border-color:#f3c4c0">
+        <strong>Élèves signalés (seuil d’absences atteint) :</strong>
+        <ul id="listeSignalesJour" style="margin:6px 0 0;padding-left:20px"></ul>
+      </div>
+    </div>
+    <div class="actions"><button class="primaire" id="btnNouveau">Nouvel appel</button></div>
+  </section>
+
+  <!-- 4. Élèves signalés -->
+  <section class="card" id="carteSignales" hidden>
+    <h2 id="titreSignales"></h2>
+    <div id="contenuSignales"></div>
+    <div class="actions"><button class="secondaire" id="btnFermerSignales">Fermer</button></div>
+  </section>
+
+</main>
+
+<div class="barre" id="barre" hidden>
+  <strong id="compteur"></strong>
+  <button class="primaire" id="btnValider">Valider l’appel</button>
+</div>
+
+<script>
+  // ⚠️ À MODIFIER : coller ici le lien de l'application web Apps Script (il se termine par /exec)
+  const API_URL = 'https://script.google.com/macros/s/AKfycby4z_4eNupPGFCTTvF5d4iyjwZMKIQFCfM37TS3i_mKhLFp8pXQM65q9SGawvOAD-1ftg/exec';
+
+  let CFG = null, AUTH = null, ELEVES = [], ETAT = [], SESSION = null, CHARGEMENT = 0, CODE_FORCE = false;
+  const $ = id => document.getElementById(id);
+  const LIBELLES = [['present', 'Présent'], ['absent', 'Absent'], ['retard', 'En retard']];
+
+  /* ---------- Appel du script Apps Script ---------- */
+  function api(action, args) {
+    if (!/^https:\/\/script\.google\.com\//.test(API_URL)) {
+      return Promise.reject(new Error('Configuration manquante : le lien du script (API_URL) n’est pas renseigné dans index.html.'));
+    }
+    // POST en texte brut : évite la pré-vérification CORS que refuse Apps Script
+    const requete = fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: action, args: args || {} }) })
+      .then(r => r.text())
+      .then(txt => {
+        let j;
+        try { j = JSON.parse(txt); } catch (e) { throw new Error('Réponse inattendue du serveur. Vérifiez le déploiement du script.'); }
+        if (!j.ok) throw new Error(j.error || 'Erreur du serveur.');
+        return j.data;
+      }, () => { throw new Error('Connexion impossible. Vérifiez votre accès internet.'); });
+    const delai = new Promise((_, refus) =>
+      setTimeout(() => refus(new Error('Le serveur met trop de temps à répondre. Réessayez.')), 60000));
+    return Promise.race([requete, delai]);
+  }
+
+  function el(tag, attrs, ...enfants) {
+    const e = document.createElement(tag);
+    for (const k in (attrs || {})) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k === 'text') e.textContent = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    enfants.forEach(c => e.append(c));
+    return e;
+  }
+
+  function remplir(sel, valeurs, placeholder) {
+    sel.innerHTML = '';
+    if (placeholder) sel.append(new Option(placeholder, ''));
+    valeurs.forEach(v => sel.append(new Option(v, v)));
+  }
+
+  function occupe(on) {
+    ['btnConnexion', 'btnSignales', 'btnValider', 'btnEnregistrerCode'].forEach(id => { $(id).disabled = on; });
+  }
+
+  function erreur(e) {
+    occupe(false);
+    alert((e && e.message ? e.message : String(e)).replace(/^Error:\s*/, ''));
+  }
+
+  function pluriel(n, mot) { return n + ' ' + mot + (n > 1 ? 's' : ''); }
+
+  /* ---------- Démarrage ---------- */
+  window.addEventListener('load', () => {
+    const d = new Date();
+    $('date').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    remplir($('loginNom'), [], '— Chargement… —');
+    occupe(true);
+    api('getListeEnseignants', {}).then(noms => {
+      remplir($('loginNom'), noms, '— Choisissez votre nom —');
+      occupe(false);
+    }).catch(e => {
+      remplir($('loginNom'), [], '— Liste indisponible —');
+      erreur(e);
+    });
+    ['date', 'heure', 'classe', 'cours'].forEach(id => $(id).addEventListener('change', chargerAuto));
+  });
+
+  /* ---------- Connexion par code ---------- */
+  function demarrer(cfg) {
+    CFG = cfg;
+    $('qui').textContent = cfg.enseignant;
+    remplir($('heure'), cfg.heures, '— Heure —');
+    remplir($('classe'), cfg.classes, '— Classe —');
+    remplir($('cours'), cfg.cours, '— Cours —');
+    $('carteLogin').hidden = true;
+    $('carteCode').hidden = true;
+    $('carteSeance').hidden = false;
+  }
+
+  function seConnecter() {
+    const nom = $('loginNom').value, code = $('loginCode').value.trim();
+    if (!nom) return erreur(new Error('Choisissez votre nom.'));
+    if (!code) return erreur(new Error('Saisissez votre code.'));
+    occupe(true);
+    api('connexion', { enseignant: nom, code: code }).then(cfg => {
+      occupe(false);
+      AUTH = { enseignant: nom, code: code };
+      $('loginCode').value = '';
+      if (cfg.doitChanger) afficherCarteCode(true); else demarrer(cfg);
+    }).catch(erreur);
+  }
+  $('btnConnexion').addEventListener('click', seConnecter);
+  $('loginCode').addEventListener('keydown', e => { if (e.key === 'Enter') seConnecter(); });
+
+  /* ---------- Choix / changement du code personnel ---------- */
+  function afficherCarteCode(force) {
+    CODE_FORCE = force;
+    $('nouveauCode').value = '';
+    $('nouveauCode2').value = '';
+    $('titreCode').textContent = force ? 'Bienvenue – choisissez votre code personnel' : 'Changer mon code';
+    $('texteCode').textContent = force
+      ? 'Votre code provisoire est reconnu. Choisissez maintenant un code personnel (4 caractères minimum) que vous seul connaîtrez. Il vous sera demandé à chaque connexion.'
+      : 'Choisissez un nouveau code personnel (4 caractères minimum).';
+    $('carteLogin').hidden = true;
+    $('carteSeance').hidden = true;
+    $('carteCode').hidden = false;
+  }
+
+  function enregistrerCode() {
+    const n1 = $('nouveauCode').value.trim(), n2 = $('nouveauCode2').value.trim();
+    if (n1.length < 4 || n1.length > 30) return erreur(new Error('Le code doit contenir de 4 à 30 caractères.'));
+    if (n1 !== n2) return erreur(new Error('Les deux codes ne sont pas identiques.'));
+    if (n1 === AUTH.code) return erreur(new Error('Le nouveau code doit être différent du code actuel.'));
+    occupe(true);
+    api('changerCode', { enseignant: AUTH.enseignant, code: AUTH.code, nouveauCode: n1 }).then(() => {
+      AUTH = { enseignant: AUTH.enseignant, code: n1 };
+      if (CODE_FORCE) {
+        return api('connexion', AUTH).then(cfg => { occupe(false); demarrer(cfg); });
+      }
+      occupe(false);
+      $('carteCode').hidden = true;
+      $('carteSeance').hidden = false;
+      alert('Votre code a été modifié.');
+    }).catch(erreur);
+  }
+  $('btnEnregistrerCode').addEventListener('click', enregistrerCode);
+  $('nouveauCode2').addEventListener('keydown', e => { if (e.key === 'Enter') enregistrerCode(); });
+
+  $('btnAnnulerCode').addEventListener('click', () => {
+    $('carteCode').hidden = true;
+    if (CODE_FORCE) { AUTH = null; $('carteLogin').hidden = false; }
+    else $('carteSeance').hidden = false;
+  });
+  $('btnChangerCode').addEventListener('click', () => { if (AUTH) afficherCarteCode(false); });
+
+  $('btnDeconnexion').addEventListener('click', () => {
+    AUTH = null; CFG = null;
+    masquerAppel();
+    $('carteSignales').hidden = true;
+    $('carteSeance').hidden = true;
+    $('carteCode').hidden = true;
+    $('carteLogin').hidden = false;
+  });
+
+  function masquerAppel() {
+    CHARGEMENT++;
+    $('chargement').hidden = true;
+    $('carteAppel').hidden = true;
+    $('barre').hidden = true;
+    $('carteResultat').hidden = true;
+    SESSION = null;
+  }
+
+  /* ---------- Liste d'appel (affichage automatique) ---------- */
+  function chargerAuto() {
+    masquerAppel();
+    if (!AUTH) return;
+    const p = Object.assign({}, AUTH, {
+      date: $('date').value, heure: $('heure').value,
+      classe: $('classe').value, cours: $('cours').value
+    });
+    if (!p.date || !p.heure || !p.classe || !p.cours) return;
+    $('carteSignales').hidden = true;
+    const num = ++CHARGEMENT;
+    $('chargement').hidden = false;
+    api('chargerAppel', p).then(data => {
+      if (num !== CHARGEMENT) return;
+      $('chargement').hidden = true;
+      SESSION = { date: p.date, heure: p.heure, classe: p.classe, cours: p.cours };
+      rendreListe(data);
+    }).catch(e => {
+      if (num !== CHARGEMENT) return;
+      $('chargement').hidden = true;
+      erreur(e);
+    });
+  }
+
+  function rendreListe(data) {
+    ELEVES = data.eleves;
+    ETAT = ELEVES.map(e => ({ statut: e.statut || 'present', minutes: e.minutes || 0 }));
+    const d = SESSION.date.split('-').reverse().join('/');
+    $('titreAppel').textContent = 'Classe ' + SESSION.classe + ' – ' + SESSION.cours +
+      ' – ' + d + ' à ' + SESSION.heure;
+    $('infoExistante').hidden = !data.existante;
+
+    const box = $('liste');
+    box.innerHTML = '';
+    if (!ELEVES.length) box.append(el('p', { text: 'Aucun élève dans cette classe.' }));
+
+    ELEVES.forEach((e, i) => {
+      const seg = el('div', { class: 'seg' });
+      LIBELLES.forEach(([s, libelle]) => {
+        const b = el('button', { type: 'button', id: 's' + i + s, text: libelle });
+        b.addEventListener('click', () => choisir(i, s));
+        seg.append(b);
+      });
+
+      const sel = el('select', { id: 'm' + i });
+      remplir(sel, CFG.motifs, '— Motif —');
+      sel.value = e.motif || '';
+      sel.addEventListener('change', () => sel.classList.remove('manque'));
+
+      const inp = el('input', { type: 'number', id: 'n' + i, min: '1', max: '300', inputmode: 'numeric', placeholder: 'min' });
+      inp.value = e.minutes ? String(e.minutes) : '';
+      const maj = () => { inp.classList.remove('manque'); majLigne(i); majResume(); };
+      inp.addEventListener('input', () => { ETAT[i].minutes = parseInt(inp.value, 10) || 0; maj(); });
+      const bloc = el('div', { class: 'minutes', id: 'mn' + i },
+        el('span', { text: 'Retard de' }), inp, el('span', { text: 'min' }));
+      [5, 10, 15, 30].forEach(v => {
+        const b = el('button', { type: 'button', class: 'chip', text: String(v) });
+        b.addEventListener('click', () => { inp.value = String(v); ETAT[i].minutes = v; maj(); });
+        bloc.append(b);
+      });
+
+      const compteurs = el('div', { class: 'compteurs' },
+        el('span', { id: 'ba' + i, class: 'badge' }),
+        el('span', { id: 'br' + i, class: 'badge' }),
+        el('span', { id: 'bs' + i, class: 'badge alerte', text: '⚠ Signalé' }));
+
+      box.append(el('div', { class: 'eleve', id: 'e' + i },
+        el('div', { class: 'nom', text: e.nom.toUpperCase() + ' ' + e.prenom }),
+        compteurs, seg, sel, bloc));
+    });
+
+    // Mise à jour de l'affichage une fois TOUTES les lignes construites
+    ELEVES.forEach((_, i) => majLigne(i));
+    majResume();
+    $('carteAppel').hidden = false;
+    $('barre').hidden = false;
+    $('carteAppel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function choisir(i, statut) {
+    ETAT[i].statut = statut;
+    if (statut !== 'absent') $('m' + i).value = '';
+    if (statut !== 'retard') { ETAT[i].minutes = 0; $('n' + i).value = ''; }
+    majLigne(i);
+    majResume();
+  }
+
+  function totaux(i) {
+    const e = ELEVES[i], st = ETAT[i].statut;
+    return {
+      abs: e.avantAbs + (st === 'absent' ? 1 : 0),
+      ret: e.avantRet + (st === 'retard' ? 1 : 0),
+      min: e.avantMin + (st === 'retard' ? ETAT[i].minutes : 0)
+    };
+  }
+
+  function majLigne(i) {
+    const st = ETAT[i].statut, t = totaux(i);
+    const ba = $('ba' + i), br = $('br' + i), bs = $('bs' + i);
+    ba.textContent = 'Absences : ' + t.abs;
+    ba.className = 'badge' + (t.abs >= CFG.seuil ? ' alerte' : (t.abs > 0 ? ' prev' : ''));
+    br.textContent = 'Retards : ' + t.ret + (t.min ? ' (' + t.min + ' min)' : '');
+    br.className = 'badge' + (t.ret > 0 ? ' retard' : '');
+    bs.hidden = t.abs < CFG.seuil;
+
+    LIBELLES.forEach(([s]) => {
+      const b = $('s' + i + s);
+      b.className = 'segbtn' + (st === s ? ' on ' + s : '');
+      b.setAttribute('aria-pressed', String(st === s));
+    });
+    const sel = $('m' + i);
+    sel.hidden = st !== 'absent';
+    sel.options[0].text = '— Motif de l’absence —';
+    $('mn' + i).hidden = st !== 'retard';
+    $('e' + i).className = 'eleve' + (st !== 'present' ? ' ' + st : '');
+  }
+
+  function majResume() {
+    const nAbs = ETAT.filter(x => x.statut === 'absent').length;
+    const nRet = ETAT.filter(x => x.statut === 'retard').length;
+    $('compteur').textContent = pluriel(nAbs, 'absent') + ' · ' + pluriel(nRet, 'retard') + ' / ' + ELEVES.length;
+
+    const b = $('bandeauSignales');
+    b.innerHTML = '';
+    const sig = [];
+    ELEVES.forEach((e, i) => {
+      const t = totaux(i);
+      if (t.abs >= CFG.seuil) sig.push({ e: e, total: t.abs });
+    });
+    b.hidden = !sig.length;
+    if (!sig.length) return;
+    b.append(el('strong', { text: '⚠ ' + pluriel(sig.length, 'élève') + ' signalé' + (sig.length > 1 ? 's' : '') +
+      ' dans cette classe (' + CFG.seuil + ' absences ou plus) :' }));
+    const ul = el('ul', { style: 'margin:6px 0 0;padding-left:20px' });
+    sig.forEach(x => ul.append(el('li', {
+      text: x.e.nom.toUpperCase() + ' ' + x.e.prenom + ' – ' + x.total + ' absences'
+    })));
+    b.append(ul);
+  }
+
+  /* ---------- Validation ---------- */
+  $('btnValider').addEventListener('click', () => {
+    if (!SESSION || !AUTH) return;
+    const pointages = [];
+    let probleme = null;
+    ELEVES.forEach((e, i) => {
+      const st = ETAT[i].statut;
+      if (st === 'present') return;
+      if (st === 'absent') {
+        const motif = $('m' + i).value;
+        if (!motif) {
+          $('m' + i).classList.add('manque');
+          if (!probleme) probleme = { i: i, msg: 'Veuillez choisir un motif pour chaque élève absent.' };
+        }
+        pointages.push({ nom: e.nom, prenom: e.prenom, statut: 'absent', motif: motif });
+      } else {
+        const min = parseInt($('n' + i).value, 10);
+        if (!(min >= 1 && min <= 300)) {
+          $('n' + i).classList.add('manque');
+          if (!probleme) probleme = { i: i, msg: 'Indiquez les minutes de retard (de 1 à 300) pour chaque élève en retard.' };
+        }
+        pointages.push({ nom: e.nom, prenom: e.prenom, statut: 'retard', minutes: min });
+      }
+    });
+    if (probleme) {
+      $('e' + probleme.i).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return alert(probleme.msg);
+    }
+    const nAbs = pointages.filter(x => x.statut === 'absent').length;
+    const nRet = pointages.length - nAbs;
+    const msg = pointages.length
+      ? 'Valider l’appel : ' + pluriel(nAbs, 'absent') + ' et ' + pluriel(nRet, 'retard') + ' sur ' + ELEVES.length + ' ?'
+      : 'Aucun absent ni retard. Valider l’appel : tous les élèves sont présents ?';
+    if (!confirm(msg)) return;
+
+    occupe(true);
+    api('enregistrerAppel', Object.assign({}, AUTH, SESSION, { pointages: pointages }))
+      .then(res => { occupe(false); afficherResultat(res); })
+      .catch(erreur);
+  });
+
+  function afficherResultat(res) {
+    $('carteAppel').hidden = true;
+    $('barre').hidden = true;
+    $('msgResultat').textContent = (res.modification ? 'Appel modifié : ' : 'Appel enregistré : ') +
+      pluriel(res.absents, 'absent') + ' et ' + pluriel(res.retards, 'retard') + (res.minutes ? ' (' + res.minutes + ' min)' : '') +
+      ' sur ' + pluriel(res.effectif, 'élève') + '.';
+    const ul = $('listeSignalesJour');
+    ul.innerHTML = '';
+    res.signales.forEach(s => ul.append(el('li', {
+      text: s.nom.toUpperCase() + ' ' + s.prenom + ' – ' + s.total + ' absences'
+    })));
+    $('blocSignalesJour').hidden = !res.signales.length;
+    $('carteResultat').hidden = false;
+    SESSION = null;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  $('btnNouveau').addEventListener('click', () => {
+    $('carteResultat').hidden = true;
+    $('classe').value = '';
+    $('cours').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ---------- Élèves signalés ---------- */
+  $('btnSignales').addEventListener('click', () => {
+    if (!AUTH) return;
+    occupe(true);
+    api('getSignales', AUTH).then(res => {
+      occupe(false);
+      const c = $('contenuSignales');
+      c.innerHTML = '';
+      $('titreSignales').textContent = 'Élèves avec ' + res.seuil + ' absences ou plus';
+      if (!res.liste.length) {
+        c.append(el('p', { text: 'Aucun élève signalé pour le moment.' }));
+      } else {
+        const tete = el('tr', {}, ...['Classe', 'Élève', 'Abs.', 'Non just.', 'Retards', 'Dernière']
+          .map(t => el('th', { text: t })));
+        const table = el('table', {}, el('thead', {}, tete));
+        const corps = el('tbody');
+        res.liste.forEach(x => corps.append(el('tr', {},
+          el('td', { text: x.classe }),
+          el('td', { text: x.nom.toUpperCase() + ' ' + x.prenom }),
+          el('td', { text: String(x.total) }),
+          el('td', { text: String(x.nonJustifiees) }),
+          el('td', { text: x.retards + (x.minutesRetard ? ' (' + x.minutesRetard + ' min)' : '') }),
+          el('td', { text: x.derniere }))));
+        table.append(corps);
+        c.append(table);
+      }
+      $('carteSignales').hidden = false;
+      $('carteSignales').scrollIntoView({ behavior: 'smooth' });
+    }).catch(erreur);
+  });
+
+  $('btnFermerSignales').addEventListener('click', () => { $('carteSignales').hidden = true; });
+</script>
+</body>
+</html>
